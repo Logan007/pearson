@@ -5,7 +5,9 @@ The [Wikipedia](https://en.wikipedia.org/wiki/Pearson_hashing) article contains 
 
 The underlying principle of this algorithm is easy to understand. Simplicity shines!
 
-Note that this is not a cryptographicly secure hashing function, so it cannot be used to prove knowledge of a secret without showing that secret. But it is well suited for keying hash tables or to compress or expand given entropy of some byte-string to a different number of bytes or just as a checksum. Its design also allows to verify smaller parts of the hash value if required.
+Note that this is not a cryptographicly secure hashing function, so it cannot unencryptedly be used to prove knowledge of a secret without showing that secret. But it is well suited for keying hash tables or to compress or expand given entropy of some byte-string to a different number of bytes or just as a checksum. Its design also allows to verify smaller parts of the hash value if required.
+
+For use as checksum of to-be-encrypted data (including the checksum), it is noteworthy that the random permutation as repeating but also final step makes Pearson Hashing even a better choice than CRC – especially with a view to XORed stream ciphers.
 
 # Changes vis-à-vis the Original
 …
