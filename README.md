@@ -25,6 +25,14 @@ This hasing function could easily be customized or _tweaked_ (here, I would avoi
 
 The provided code follows the above-elaborated thoughts and offers two different flavors:
 
-One outputs a 128-bit hash value to memory for any hashed string. It is endian-aware. Also, a SSE version is included, just compile using `-march=native`. It probably will not see an AVX-imeplementation as the _shuffle_ is not getting wider (bitwise) and thus not speed up the table look-up. SSE implementation could turn out slightly slower on some more modern machines than plain C version compiled using `-O3`. The reason probably is some CPU feature or so that came up somewhen between Sandy Bridge and Kaby Lake – I was not able to nail it down more precisely. NEON might follow at a later point in time.
+One outputs a 128-bit hash value to memory for any hashed string. It is endian-aware. Also, a SSE version is included, just compile using `-march=native`. It probably will not see an AVX-imeplementation as the _shuffle_ is not getting wider (bitwise) and thus not speed up the table look-up. SSE implementation could turn out slightly slower on some more modern machines than plain C version compiled using `-Ofast`. The reason probably is some CPU feature speed-up or so that came up somewhen between Sandy Bridge and Haswell – I was not able to nail it down more precisely. NEON might follow at a later point in time.
 
 The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware.
+
+The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run `./a.out`:
+
+ CPU | 32-bit hash | 128-bit hash |
+:---:| ---:        | ---:         |
+Cortex A53|  60.6 MB/s |  35.1 MB/s |
+i7 2860QM | 192.9 MB/s |  82.7 MB/s |
+i7 7500U  | 221.1 MB/s | 128.6 MB/s |
