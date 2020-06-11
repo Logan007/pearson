@@ -29,7 +29,7 @@ One outputs a 128-bit hash value to memory for any hashed string. It is endian-a
 
 The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware.
 
-The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run `./a.out`:
+The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`):
 
  CPU | 32-bit hash | 128-bit hash |
 :---:| ---:        | ---:         |
