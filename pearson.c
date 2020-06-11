@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 // #include <string.h>
 
@@ -131,9 +132,9 @@ void pearson_hash_128 (uint8_t *out, uint8_t *in, size_t len) {
 	_mm_store_si128 ((__m128i*)out , hash);
 #else
 	uint64_t *o;
-	o = &out[0];
+	o = (uint64_t*)&out[0];
 	*o = upper_hash;
-	o = &out[8];
+	o = (uint64_t*)&out[8];
 	*o = lower_hash;
 #endif
 }
