@@ -34,5 +34,14 @@ The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gc
  CPU | 32-bit hash | 128-bit hash |
 :---:| ---:        | ---:         |
 Cortex A53|  60.6 MB/s |  35.1 MB/s |
-i7 2860QM | 192.9 MB/s |  82.7 MB/s |
-i7 7500U  | 221.1 MB/s | 128.6 MB/s |
+i7 2860QM | 192.9 MB/s |  82.7 MB/s¹|
+i7 5775C  | 232.7 MB/s | 131.0 MB/s²|
+i7 7500U  | 221.1 MB/s | 128.6 MB/s²|
+
+¹ this was obtained using SSE code; the non-SSE version delivers 77.5 MB/s
+
+² on these platforms, speeds were obtained with plain 64-bit C code (omitting `-march=native`) as it turned out way faster than the SSE code (85.4 MB/s and 86.7 MB/s)
+
+# Contribute
+
+You are welcome to help with NEON implementation or any other contribution that would speed-up things. Don't be shy and leave an _Issue_ or a _Pull Request_!
