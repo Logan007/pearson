@@ -1,11 +1,10 @@
 #include <stddef.h>
 #include <stdint.h>
-// #include <string.h>
 
 #include "pearson.h"
 
 
-// table as in original paper "Fast Hashing of Variable-Length Text Strings" by Peter K. Pearson 
+// table as in original paper "Fast Hashing of Variable-Length Text Strings" by Peter K. Pearson
 // as published in The Communications of the ACM  Vol.33, No.  6 (June 1990), pp. 677-680.
 static const uint8_t t[256] ={
 	0x01, 0x57, 0x31, 0x0c, 0xb0, 0xb2, 0x66, 0xa6, 0x79, 0xc1, 0x06, 0x54, 0xf9, 0xe6, 0x2c, 0xa3,
@@ -50,14 +49,151 @@ static const uint8_t t[256] ={
 #define ROR32(x,r) (((x)>>(r))|((x)<<(32-(r))))
 
 
-void pearson_hash_128 (uint8_t *out, uint8_t *in, size_t len) {
+void pearson_hash_256 (uint8_t *out, const uint8_t *in, size_t len) {
 
 	/* initial values -  astonishingly, assembling using SHIFTs and ORs (in register)
          * works faster on well pipelined CPUs than loading the 64-bit value from memory.
          * however, there is one advantage to loading from memory: as we also store back to
          * memory at the end, we do not need to care about endianess! */
-	uint8_t upper[8] = { 0xc0, 0x60, 0x30, 0x18, 0x0c, 0x06, 0x03, 0x00 };
-	uint8_t lower[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+	uint8_t upper[8] = { 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08 };
+	uint8_t lower[8] = { 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
+
+	uint64_t upper_hash_mask = *(uint64_t*)&upper;
+	uint64_t lower_hash_mask = *(uint64_t*)&lower;
+	uint64_t high_upper_hash_mask = upper_hash_mask + 0x1010101010101010;
+	uint64_t high_lower_hash_mask = lower_hash_mask + 0x1010101010101010;
+
+#if defined (__SSE4_2__)
+	__m128i hash_mask = _mm_set_epi64 ((__m64)lower_hash_mask, (__m64)upper_hash_mask);
+	__m128i high_hash_mask = _mm_set_epi64 ((__m64)high_lower_hash_mask, (__m64)high_upper_hash_mask);
+	__m128i hash= _mm_xor_si128 (hash, hash);
+	__m128i high_hash= _mm_xor_si128 (high_hash, high_hash);
+
+	__m128i const p16  = _mm_set1_epi8 (0x10);
+	__m128i lut_result  = _mm_xor_si128 (lut_result, lut_result);
+	__m128i high_lut_result  = _mm_xor_si128 (high_lut_result, high_lut_result);
+	__m128i selected_entries;
+	__m128i high_selected_entries;
+	__m128i table_line;
+#else
+	uint64_t upper_hash = 0;
+	uint64_t lower_hash = 0;
+	uint64_t high_upper_hash = 0;
+	uint64_t high_lower_hash = 0;
+#endif
+
+	for (size_t i = 0; i < len; i++) {
+		// broadcast the character, xor into hash, make them different permutations
+#if defined (__SSE4_2__)
+		__m128i cc = _mm_set1_epi8 (in[i]);
+		hash = _mm_xor_si128 (hash, cc);
+		high_hash = _mm_xor_si128 (high_hash, cc);
+		__m128i lut_index = _mm_xor_si128 (hash, hash_mask);
+		__m128i high_lut_index = _mm_xor_si128 (high_hash, high_hash_mask);
+#else
+		uint64_t c = (uint8_t)in[i];
+		c |= c <<  8;
+		c |= c << 16;
+		c |= c << 32;
+		upper_hash ^= c ^ upper_hash_mask;
+		lower_hash ^= c ^ lower_hash_mask;
+		high_upper_hash ^= c ^ high_upper_hash_mask;
+		high_lower_hash ^= c ^ high_lower_hash_mask;
+#endif
+		// table lookup
+#if defined (__SSE4_2__)
+		lut_result = _mm_xor_si128 (lut_result, lut_result);
+		high_lut_result = _mm_xor_si128 (lut_result, lut_result);
+		for (size_t j = 0; j < 256; j += 16) {
+			table_line = _mm_load_si128 ((__m128i *)&t[j]);
+			selected_entries = _mm_min_epu8 (lut_index, p16);
+			selected_entries = _mm_cmpeq_epi8 (selected_entries, p16);
+			selected_entries = _mm_or_si128 (selected_entries, lut_index);
+			selected_entries = _mm_shuffle_epi8 (table_line, selected_entries);
+			high_selected_entries = _mm_min_epu8 (high_lut_index, p16);
+			high_selected_entries = _mm_cmpeq_epi8 (high_selected_entries, p16);
+			high_selected_entries = _mm_or_si128 (high_selected_entries, high_lut_index);
+			high_selected_entries = _mm_shuffle_epi8 (table_line, high_selected_entries);
+			lut_result  = _mm_or_si128 (lut_result, selected_entries);
+			lut_index = _mm_sub_epi8 (lut_index, p16);
+			high_lut_result  = _mm_or_si128 (high_lut_result, high_selected_entries);
+			high_lut_index = _mm_sub_epi8 (high_lut_index, p16);
+		}
+		hash = lut_result;
+		high_hash = high_lut_result;
+#else
+		uint8_t x;
+		uint64_t h = 0;
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+ 		upper_hash = h;
+
+		h = 0;
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		lower_hash = h;
+
+		h = 0;
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_upper_hash; x = t[x]; high_upper_hash >>= 8; h |= x; h=ROR64(h,8);
+ 		high_upper_hash = h;
+
+		h = 0;
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		x = high_lower_hash; x = t[x]; high_lower_hash >>= 8; h |= x; h=ROR64(h,8);
+		high_lower_hash = h;
+#endif
+	}
+	// store output
+#if defined (__SSE4_2__)
+	_mm_store_si128 ((__m128i*)out , high_hash);
+	_mm_store_si128 ((__m128i*)&out[16] , hash);
+#else
+	uint64_t *o;
+	o = (uint64_t*)&out[0];
+	*o = high_upper_hash;
+	o = (uint64_t*)&out[8];
+	*o = high_lower_hash;
+	o = (uint64_t*)&out[16];
+	*o = upper_hash;
+	o = (uint64_t*)&out[24];
+	*o = lower_hash;
+#endif
+}
+
+
+void pearson_hash_128 (uint8_t *out, const uint8_t *in, size_t len) {
+
+	/* initial values -  astonishingly, assembling using SHIFTs and ORs (in register)
+         * works faster on well pipelined CPUs than loading the 64-bit value from memory.
+         * however, there is one advantage to loading from memory: as we also store back to
+         * memory at the end, we do not need to care about endianess! */
+	uint8_t upper[8] = { 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08 };
+	uint8_t lower[8] = { 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
 
 	uint64_t upper_hash_mask = *(uint64_t*)&upper;
 	uint64_t lower_hash_mask = *(uint64_t*)&lower;
@@ -142,13 +278,9 @@ void pearson_hash_128 (uint8_t *out, uint8_t *in, size_t len) {
 
 // 32-bit hash: the return value has to be interpreted as uint32_t and
 // follows machine-specific endianess in memory
-uint32_t pearson_hash_32 (uint8_t *in, size_t len) {
+uint32_t pearson_hash_32 (const uint8_t *in, size_t len) {
 
-	uint32_t hash_mask = 0;
-	hash_mask++;
-	hash_mask |= hash_mask << 9;
-	hash_mask |= hash_mask << 9;
-	hash_mask |= hash_mask << 9;
+	uint32_t hash_mask = 0x03020100;
 
 	uint32_t hash = 0;
 
