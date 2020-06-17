@@ -7,13 +7,13 @@ The underlying principle of this algorithm is easy to understand. Simplicity shi
 
 Note that this is not a cryptographicly secure hashing function, so it cannot unencryptedly be used to prove knowledge of a secret without needing to present that secret. But it is well suited for keying hash tables or to compress or expand given entropy of some byte-string to a different number of bytes or just as a checksum. Its design also allows to verify smaller parts of the hash value if required.
 
-For use as checksum of to-be-encrypted data (including the checksum), it is noteworthy that the random permutation as repeating but also final step makes Pearson Hashing even a better choice than CRC – especially with a view to exclusive-ored stream ciphers.
+For use as checksum of to-be-encrypted data (including the checksum), it is noteworthy that the random permutation as repeating but especially final step makes Pearson Hashing even a better choice than CRC – especially with a view to exclusive-ored stream ciphers.
 
 # Thoughts
 
 To get to output bit-widths beyond eight, Pearson describes an extension scheme which uses different starting values. Unfortunately, output will never contain the same two bytes in the various positions then – diminishing the codomain. This can be avoided by using a different permutation per position (output byte). In that case, there is no need for different starting values anymore.
 
-Not to use another look-up-table for each and every output byte, this implementation changes every byte by a constant value  – different for each position – just before the look-up. If the table is random (and not arithmetically generated), it will seem to be a different permutation (from the new-index-look-up point of view). Remember, this is all modulo 256. After the look-up, the applied change could be reversed but it does not have to (gaining some speed).
+Not to use another look-up-table for each and every output byte, this implementation changes every byte by a constant value  – different for each position – just before the look-up. If the table is random (and not arithmetically generated), it will seem to be a different permutation (from the new-index-look-up point of view). Remember, this is all modulo 256. After the look-up, the applied change could be reversed but it does not have to (gaining some speed). It was Peter K. Pearson – with whom I had a short exchange of eMails on getting permission for use – who pointed out that this is like key-whitening as it could be found in DES-X for example.
 
 Talking about speed, it seems to be feasible to use exclusive-or to change the to-be-looked-up index. A big advantage can be assumed for parallel implementation in regular C then (if not using SSE's vetorized bytewise operations).
 
