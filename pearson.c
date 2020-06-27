@@ -278,11 +278,9 @@ void pearson_hash_128 (uint8_t *out, const uint8_t *in, size_t len) {
 
 // 32-bit hash: the return value has to be interpreted as uint32_t and
 // follows machine-specific endianess in memory
-uint32_t pearson_hash_32 (const uint8_t *in, size_t len) {
+uint32_t pearson_hash_32 (const uint8_t *in, size_t len, uint32_t hash) {
 
 	uint32_t hash_mask = 0x03020100;
-
-	uint32_t hash = 0;
 
 	for (size_t i = 0; i < len; i++) {
 		// broadcast the character, xor into hash, make them different permutations

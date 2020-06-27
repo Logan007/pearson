@@ -45,13 +45,13 @@ int main(int argc, char* argv[]) {
 	fprintf (stdout, "\n");
 
 	fprintf (stdout, "               0x........................................................%08x\n",
-	                  pearson_hash_32((uint8_t*)&null_data,4));
+	                  pearson_hash_32((uint8_t*)&null_data, 4, 0));
 
 	timestamp_t start, end;
 
 	start = get_timestamp();
         for (uint32_t i=0; i < NUM_ITER; i++)
-		*(uint32_t*)packet = pearson_hash_32 (packet, sizeof (packet));
+		*(uint32_t*)packet = pearson_hash_32 (packet, sizeof (packet), 0);
 	end = get_timestamp();
 	fprintf (stderr, "throughput  32-bit hashing: %7.1f MB/s\n",
 		          sizeof (packet) * (float)NUM_ITER / 1024.0 / 1024.0 /
