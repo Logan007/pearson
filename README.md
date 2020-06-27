@@ -21,13 +21,15 @@ In a hunt for more speed, a quick test using a linear congruential generator wit
 
 This hasing function could easily be customized or _tweaked_ (here, I would avoid the term _keyed_) just by changing the permutation along some provided tweak. A possible solution would be to use a tweak as seed for a pseudo-random number generator (maybe not a linear congruential one…) and repeatedly switch any two values in the table indicated by the pseduo-random number generator. Good thing here: The setup happens once _before_ use, it does not impact the actual hashing speedwise.
 
+The hash value equals the innner hashing function state so it can easily be updated whenever further to-be-hashed input data comes along, e.g. in streaming applications.
+
 # This Implementation
 
 The provided code follows the above-elaborated thoughts and offers two different flavors:
 
 One outputs a 128-bit or 256-bit hash value to memory for any hashed string. It is endian-aware. Also, a SSE version is included, just compile using `-march=native`. The 256-bit might see an AVX-imeplementation in the future, probably not the 128-bit hashing as the _shuffle_ is not getting wider (bitwise) and thus does not speed up the table look-up. SSE implementation could turn out slightly slower on some more modern machines than plain C version compiled using `-Ofast`. The reason probably is some CPU feature speed-up or so that came up somewhen between Sandy Bridge and Haswell – I was not able to nail it down more precisely. NEON might follow at a later point in time, too.
 
-The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit and 256-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware.
+The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit and 256-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware. Also, the return value could be used as 'hash' parameter for another call to update the hash  while hashing more of an input.
 
 The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`):
 
