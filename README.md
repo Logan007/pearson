@@ -17,9 +17,11 @@ Not to use another look-up-table for each and every output byte, this implementa
 
 Talking about speed, it seems to be feasible to use exclusive-or to change the to-be-looked-up index.  It was Peter K. Pearson – with whom I had a short exchange of eMails on getting permission for use – who pointed out that this is exactly like the key-whitening as found in DES-X for example. By using exclusive-or, a big advantage can be assumed for parallel implementation in regular C then (if not using SSE's vetorized bytewise operations).
 
-In a hunt for more speed, a quick test using a linear congruential generator with full periodicity of 256 (trying to avoid the look-up in memory) resulted in uneven-looking distributed output. I am not able to see that my parameters were badly chosen and I stopped these test maybe too soon, but for now, this road does not want to be gone down.
+In a hunt for more speed, a quick test using a linear congruential generator with full periodicity of 256 (trying to avoid the look-up in memory) resulted in uneven-looking distributed output. I am not able to see that my parameters were badly chosen and I stopped these test maybe too soon, but for now, this road does not want to be gone down. Thus, it seems we stick with a look-up table for now.
 
-This hasing function could easily be customized or _tweaked_ (here, I would avoid the term _keyed_) just by changing the permutation along some provided tweak. A possible solution would be to use a tweak as seed for a pseudo-random number generator (maybe not a linear congruential one…) and repeatedly switch any two values in the table indicated by the pseduo-random number generator. Good thing here: The setup happens once _before_ use, it does not impact the actual hashing speedwise.
+However, if system memory permits, the lookup-table could be extended to 16 bit width which will require 2¹⁶ × 16 bits = 128K bytes of memory.
+
+The hasing function could easily be customized or _tweaked_ (here, I would avoid the term _keyed_) just by changing the permutation along some provided tweak. A possible solution would be to use a tweak as seed for a pseudo-random number generator (maybe not a linear congruential one…) and repeatedly switch any two values in the table indicated by the pseduo-random number generator. Good thing here: The setup happens once _before_ use, it does not impact the actual hashing speedwise.
 
 The hash value equals the innner hashing function state so it can easily be updated whenever further to-be-hashed input data comes along, e.g. in streaming applications.
 
@@ -31,7 +33,7 @@ One outputs a 128-bit or 256-bit hash value to memory for any hashed string. It 
 
 The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit and 256-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware. Also, the return value could be used as 'hash' parameter for another call to update the hash  while hashing more of an input.
 
-The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`):
+The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`): – outdated –
 
  CPU | 32-bit hash | 128-bit hash |
 :---:| ---:        | ---:         |
