@@ -17,7 +17,7 @@ Not to use another look-up-table for each and every output byte, this implementa
 
 Talking about speed, it seems to be feasible to use exclusive-or to change the to-be-looked-up index.  It was Peter K. Pearson – with whom I had a short exchange of eMails on getting permission for use – who pointed out that this is exactly like the key-whitening as found in DES-X for example. By using exclusive-or, a big advantage can be assumed for parallel implementation in regular C then (if not using SSE's vetorized bytewise operations).
 
-In a hunt for more speed, a quick test using a linear congruential generator with full periodicity of 256 (trying to avoid the look-up in memory) resulted in uneven-looking distributed output. I am not able to see that my parameters were badly chosen and I stopped these test maybe too soon, but for now, this road does not want to be gone down. Thus, it seems we stick with a look-up table for now.
+In a hunt for more speed, a quick test using a linear congruential generator with full periodicity of 256 (trying to avoid the look-up in memory) resulted in uneven-looking distributed output. I am not able to see that my parameters were badly chosen and I stopped these test maybe too soon, but for now, this road does not want to be gone down. Thus, sticking to a look-up table for now.
 
 However, if system memory permits, the lookup-table could be extended to 16 bit width which will require 2¹⁶ × 16 bits = 128K bytes of memory.
 
