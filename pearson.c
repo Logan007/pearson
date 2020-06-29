@@ -24,6 +24,10 @@ static const uint8_t t[256] ={
 	0x8c, 0x24, 0xd2, 0xac, 0x29, 0x36, 0x9f, 0x08, 0xb9, 0xe8, 0x71, 0xc4, 0xe7, 0x2f, 0x92, 0x78,
 	0x33, 0x41, 0x1c, 0x90, 0xfe, 0xdd, 0x5d, 0xbd, 0xc2, 0x8b, 0x70, 0x2b, 0x47, 0x6d, 0xb8, 0xd1 };
 
+#ifndef LOW_MEM_FOOTPRINT
+static uint16_t t16[65536];
+#endif
+
 /*
 // alternative table as used in RFC 3074 and NOT as in original paper
 static const uint8_t t[256] ={
@@ -239,8 +243,9 @@ void pearson_hash_128 (uint8_t *out, const uint8_t *in, size_t len) {
 		}
 		hash = lut_result;
 #else
-		uint8_t x;
 		uint64_t h = 0;
+#ifdef LOW_MEM_FOOTPRINT
+		uint8_t x;
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
@@ -249,9 +254,17 @@ void pearson_hash_128 (uint8_t *out, const uint8_t *in, size_t len) {
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = upper_hash; x = t[x]; upper_hash >>= 8; h |= x; h=ROR64(h,8);
+#else
+		uint16_t x;
+		x = upper_hash; x = t16[x]; upper_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = upper_hash; x = t16[x]; upper_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = upper_hash; x = t16[x]; upper_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = upper_hash; x = t16[x]; upper_hash >>= 16; h |= x; h=ROR64(h,16);
+#endif
  		upper_hash = h;
 
 		h = 0;
+#ifdef LOW_MEM_FOOTPRINT
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
@@ -260,6 +273,12 @@ void pearson_hash_128 (uint8_t *out, const uint8_t *in, size_t len) {
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
 		x = lower_hash; x = t[x]; lower_hash >>= 8; h |= x; h=ROR64(h,8);
+#else
+		x = lower_hash; x = t16[x]; lower_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = lower_hash; x = t16[x]; lower_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = lower_hash; x = t16[x]; lower_hash >>= 16; h |= x; h=ROR64(h,16);
+		x = lower_hash; x = t16[x]; lower_hash >>= 16; h |= x; h=ROR64(h,16);
+#endif
 		lower_hash = h;
 #endif
 	}
@@ -289,14 +308,29 @@ uint32_t pearson_hash_32 (const uint8_t *in, size_t len, uint32_t hash) {
 		c |= c << 16;
 		hash ^= c ^ hash_mask;
 		// table lookup
-		uint8_t x;
+#ifdef LOW_MEM_FOOTPRINT
 		uint32_t h = 0;
+		uint8_t x;
 		x = hash; x = t[x]; hash >>= 8; h |= x; h=ROR32(h,8);
 		x = hash; x = t[x]; hash >>= 8; h |= x; h=ROR32(h,8);
 		x = hash; x = t[x]; hash >>= 8; h |= x; h=ROR32(h,8);
 		x = hash; x = t[x]; hash >>= 8; h |= x; h=ROR32(h,8);
 		hash = h;
+#else
+		hash = (t16[hash >> 16] << 16) + t16[(uint16_t)hash];
+#endif
 	}
 	// output
 	return hash;
+}
+
+
+void pearson_hash_init () {
+
+#ifndef LOW_MEM_FOOTPRINT
+	size_t i;
+
+	for (i = 0; i < 65536; i++)
+		t16[i] = (t[i >> 8] << 8) + t[(uint8_t)i];
+#endif
 }

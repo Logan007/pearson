@@ -27,6 +27,8 @@ int main(int argc, char* argv[]) {
 	fprintf (stdout, "the following lines should read the same:\n");
 	fprintf (stdout, "0x00000000 --> 0xfb53ba434979fd22074f52aa991d198cf1aa388d6c9769649ff0fe9a3495f97c\n");
 
+	pearson_hash_init();
+
 	fprintf (stdout, "0x");
 	for (size_t j=0; j < 4; j++)
 		fprintf (stdout, "%02x",packet[j]);
