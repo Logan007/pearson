@@ -48,7 +48,7 @@ The fully compiled tool using `gcc -O3 test.c pearson.c` or `gcc -O3 -march=nati
 | plain        | 242.6 MB/s | 169.5 MB/s  | 124.7 MB/s  | 33.5 MB/s    | 18.9 MB/s    |
 | __O3__       | 413.4 MB/s | 259.3 MB/s  | 201.2 MB/s  | 134.2 MB/s   | 107.5 MB/s   |
 | O3 & _SSE_   | 413.3 MB/s | 260.1 MB/s  | 206.3 MB/s  | _86.8 MB/s_  | _48.2 MB/s_  |
-| O3 & low mem | 412.9 MB/s |_302.5 MB/s_ | _221.0 MB/s_| _127.0 MB/s_ | _69.6_ MB/s_ |
+| O3 & low mem | 412.9 MB/s |_302.5 MB/s_ | _221.0 MB/s_| _127.0 MB/s_ | _69.6 MB/s_ |
 
 
 | Cortex A53   | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
@@ -59,7 +59,7 @@ The fully compiled tool using `gcc -O3 test.c pearson.c` or `gcc -O3 -march=nati
 
 Note that all CPUs calculate the 16-bit and 32-bit hashes faster _without_ the 16-bit look-up table when compiled with `-D LOW_MEM_FOOTPRINT`.
 
-An obvious recomendation would be to use compiler optimizations `-O3` and in some cases (ARM) also `-D LOW_MEM_FOOTPRINT`.
+An obvious recomendation would be to always use compiler optimizations `-O3` and in some cases (ARM) also `-D LOW_MEM_FOOTPRINT`.
 
 SSE does not seem to be well suited for a 256 byte table look-up. Could NEON (not implemented yet) do better?
 
