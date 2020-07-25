@@ -33,18 +33,36 @@ One outputs a 128-bit or 256-bit hash value to memory for any hashed string. It 
 
 The other one returns a 32-bit hash of type `uint32_t`. Those bits are identical to the last 32 bit of the 128-bit and 256-bit hash. As it is a regular return value of a function call, its further use must happen endian-aware. Also, the return value could be used as 'hash' parameter for another call to update the hash  while hashing more of an input.
 
-The fully compiled tool using `gcc -Ofast -mtune=native test.c pearson.c` or `gcc -Ofast -mtune=native -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`): – outdated –
+The fully compiled tool using `gcc -O3 test.c pearson.c` or `gcc -O3 -march=native test.c pearson.c`, respectively, shows the following speeds when run (`./a.out`):
 
- CPU | 32-bit hash | 128-bit hash |
-:---:| ---:        | ---:         |
-Cortex A53|  60.6 MB/s |  35.1 MB/s |
-i7 2860QM | 192.9 MB/s |  82.7 MB/s¹|
-i7 5775C  | 232.7 MB/s | 131.0 MB/s²|
-i7 7500U  | 221.1 MB/s | 128.6 MB/s²|
+| i7 2860QM    | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
+| :---         | ---:       | ---:        | ---:        | ---:         | ---:         |
+| plain        | 182.7 MB/s | 134.6 MB/s  | 103.7 MB/s  | 24.6 MB/s    | 14.2 MB/s    |
+| __O3__       | 358.5 MB/s | 255.5 MB/s  | 187.4 MB/s  | 106.8 MB/s   | 65.6 MB/s    |
+| O3 & _SSE_   | 349.2 MB/s | 249.1 MB/s  | 184.1 MB/s  | _77.5 MB/s_  | _39.2 MB/s_  |
+| O3 & low mem | 356.1 MB/s | _294.2 MB/s_| 164.3 MB/s  | 72.9 MB/s    | 40.8 MB/s    |
 
-¹ this was obtained using SSE code; the non-SSE version delivers 77.5 MB/s
 
-² on these platforms, speeds were obtained with plain 64-bit C code (omitting `-march=native`) as it turned out way faster than the SSE code (85.4 MB/s and 86.7 MB/s)
+| i7 7500U     | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
+| :---         | ---:       | ---:        | ---:        | ---:         | ---:         |
+| plain        | 242.6 MB/s | 169.5 MB/s  | 124.7 MB/s  | 33.5 MB/s    | 18.9 MB/s    |
+| __O3__       | 413.4 MB/s | 259.3 MB/s  | 201.2 MB/s  | 134.2 MB/s   | 107.5 MB/s   |
+| O3 & _SSE_   | 413.3 MB/s | 260.1 MB/s  | 206.3 MB/s  | _86.8 MB/s_  | _48.2 MB/s_  |
+| O3 & low mem | 412.9 MB/s |_302.5 MB/s_ | _221.0 MB/s_| _127.0 MB/s_ | _69.6_ MB/s_ |
+
+
+| Cortex A53   | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
+| :---         | ---:       | ---:        | ---:        | ---:         | ---:         |
+| plain        | 40.4 MB/s  | 24.6 MB/s   | 17.3 MB/s   | 3.8 MB/s     | 1.9 MB/s     |
+| __O3__       | 190.2 MB/s | 66.9 MB/s   | 39.9 MB/s   | 13.6 MB/s    | 7.4 MB/s     |
+| O3 & low mem | 190.2 MB/s |_78.4 MB/s_  |_63.5 MB/s_  |_33.7 MB/s_   |_19.8 MB/s_   |
+
+Note that all CPUs calculate the 16-bit and 32-bit hashes faster _without_ the 16-bit look-up table when compiled with `-D LOW_MEM_FOOTPRINT`.
+
+An obvious recomendation would be to use compiler optimizations `-O3` and in some cases (ARM) also `-D LOW_MEM_FOOTPRINT`.
+
+SSE does not seem to be well suited for a 256 byte table look-up. Could NEON (not implemented yet) do better?
+
 
 # Contribute
 
