@@ -40,8 +40,8 @@ The fully compiled tool using `gcc -O3 test.c pearson.c` or `gcc -O3 -march=nati
 | plain        | 182.7 MB/s | 134.6 MB/s  | 103.7 MB/s  | 24.6 MB/s    | 14.2 MB/s    |
 | __O3__       |_358.5 MB/s_| 255.5 MB/s  |_187.4 MB/s_ | _106.8 MB/s_ |_65.6 MB/s_   |
 | O3 & _SSE_   | 349.2 MB/s | 249.1 MB/s  | 184.1 MB/s  | 77.5 MB/s    | 39.2 MB/s    |
-| O3 & low mem |_356.1 MB/s_|_294.2 MB/s_ | 164.3 MB/s  | 72.9 MB/s    | 40.8 MB/s    |
-
+| O3 & low mem |_356.1 MB/s_|_294.2 MB/s_ | 164.3 MB/s  |  72.9 MB/s   | 40.8 MB/s    |
+| SSE & AES-NI |            |             |             |_304.7 MB/s_  |              |
 
 | i7 7500U     | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
 | :---         | ---:       | ---:        | ---:        | ---:         | ---:         |
@@ -49,7 +49,7 @@ The fully compiled tool using `gcc -O3 test.c pearson.c` or `gcc -O3 -march=nati
 | __O3__       |_413.4 MB/s_| 259.3 MB/s  | 201.2 MB/s  |_134.2 MB/s_  |_107.5 MB/s_  |
 | O3 & _SSE_   | 413.3 MB/s | 260.1 MB/s  | 206.3 MB/s  |  86.8 MB/s   |  48.2 MB/s   |
 | O3 & low mem |_412.9 MB/s_|_302.5 MB/s_ |_221.0 MB/s_ | 127.0 MB/s   |  69.6 MB/s   |
-
+| SSE & AES-NI |            |             |             |_379.9 MB/s_  |              |
 
 | Cortex A53   | 8-bit hash | 16-bit hash | 32-bit hash | 128-bit hash | 256-bit hash |
 | :---         | ---:       | ---:        | ---:        | ---:         | ---:         |
