@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 	uint8_t packet[PACKET_SIZE] = { 0 };
 	uint32_t null_data  =   0;
 	fprintf (stdout, "the following lines should read the same:\n");
-	fprintf (stdout, "0x00000000 --> 0xfb53ba434979fd22074f52aa991d198cf1aa388d6c9769649ff0fe9a3495f97c\n");
+	fprintf (stdout, "0x00000000 --> 0x7dc7e4933d9353060f70bb16f55191e7cbb26d149f76aff322ca7a582b35f476\n");
 
 	pearson_hash_init();
 
@@ -46,6 +46,10 @@ int main(int argc, char* argv[]) {
 		fprintf (stdout, "%02x",packet[j]);
 	fprintf (stdout, "\n");
 
+	fprintf (stdout, "               0x................................................%16llx\n",
+	                  pearson_hash_64((uint8_t*)&null_data, 4, 0));
+
+
 	fprintf (stdout, "               0x........................................................%08x\n",
 	                  pearson_hash_32((uint8_t*)&null_data, 4, 0));
 
@@ -56,6 +60,14 @@ int main(int argc, char* argv[]) {
 		*(uint32_t*)packet = pearson_hash_32 (packet, sizeof (packet), 0);
 	end = get_timestamp();
 	fprintf (stderr, "throughput  32-bit hashing: %7.1f MB/s\n",
+		          sizeof (packet) * (float)NUM_ITER / 1024.0 / 1024.0 /
+			  (end - start) * 1000000000.0 );
+
+	start = get_timestamp();
+        for (uint32_t i=0; i < NUM_ITER; i++)
+		*(uint32_t*)packet = pearson_hash_64 (packet, sizeof (packet), 0);
+	end = get_timestamp();
+	fprintf (stderr, "throughput  64-bit hashing: %7.1f MB/s\n",
 		          sizeof (packet) * (float)NUM_ITER / 1024.0 / 1024.0 /
 			  (end - start) * 1000000000.0 );
 
