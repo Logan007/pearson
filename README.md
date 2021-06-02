@@ -9,6 +9,8 @@ Note that this is not a cryptographicly secure hashing function, so it cannot un
 
 For use as checksum of to-be-encrypted data (including the checksum), it is noteworthy that the random permutation as repeating but especially final step makes Pearson Hashing even a better choice than CRC – especially with a view to exclusive-ored stream ciphers.
 
+You also might want to take a look at [Pearson Block Hashing](https://github.com/Logan007/pearsonB), an extension to the original Pearson Hashing in terms of block width even [passing](https://github.com/rurban/smhasher/commit/6eb697f628643fdfcaefbcf0a7d228f84eac80e1) [SMHasher](https://github.com/rurban/smhasher).
+
 # Thoughts
 
 To get to output bit-widths beyond eight, Pearson describes an extension scheme which uses different starting values. Unfortunately, output will never contain the same two bytes in the various positions then – diminishing the codomain. This can be avoided by using a different permutation per position (output byte). In that case, there is no need for different starting values anymore.
